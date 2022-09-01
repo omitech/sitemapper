@@ -6,7 +6,7 @@
  * @author Sean Burke <@seantomburke>
  */
 
-import { parseStringPromise } from "xml2js";
+import { parseStringPromise, processors  } from "xml2js";
 import got from "got";
 import zlib from "zlib";
 import pLimit from "p-limit";
@@ -212,7 +212,12 @@ export default class Sitemapper {
       }
 
       // otherwise parse the XML that was returned.
-      const data = await parseStringPromise(responseBody);
+      const data = await parseStringPromise(responseBody,
+                                            {  
+                                              trim: true,
+                                              normalizeTags: true,
+                                              tagNameProcessors: [processors.stripPrefix]
+                                            });
 
       // return the results
       return { error: null, data };
@@ -309,13 +314,18 @@ export default class Sitemapper {
         // filter out any urls that are older than the lastmod
         const sites = data.urlset.url
           .filter((site) => {
+            
             if (this.lastmod === 0) return true;
-            if (site.lastmod === undefined) return false;
-            const modified = new Date(site.lastmod[0]).getTime();
-
+            
+            let lastmod = (site.news && site.news[0].publication_date) ? site.news[0].publication_date[0] : site.lastmod;
+            if (lastmod === undefined) return true;
+            
+            const modified = new Date(lastmod).getTime();
             return modified >= this.lastmod;
           })
-          .map((site) => site.loc && site.loc[0]);
+          .map((site) => {
+            return {link: site.loc && site.loc[0], title: (site.news && site.news[0].title) ?  site.news[0].title[0] : undefined};
+          });
         return {
           sites,
           errors: [],
