@@ -312,20 +312,38 @@ export default class Sitemapper {
           console.debug(`Urlset found during "crawl('${url}')"`);
         }
         // filter out any urls that are older than the lastmod
+        /*
         const sites = data.urlset.url
           .filter((site) => {
             
             if (this.lastmod === 0) return true;
             
-            let lastmod = (site.news && site.news[0].publication_date) ? site.news[0].publication_date[0] : site.lastmod;
+            let lastmod = (site.news && site.news[0].publication_date) ? site.news[0].publication_date[0] : site.lastmod && site.lastmod[0];
             if (lastmod === undefined) return true;
             
             const modified = new Date(lastmod).getTime();
             return modified >= this.lastmod;
           })
           .map((site) => {
-            return {link: site.loc && site.loc[0], title: (site.news && site.news[0].title) ?  site.news[0].title[0] : undefined};
+            return {
+                    link: site.loc && site.loc[0],
+                    title: (site.news && site.news[0].title) ?  site.news[0].title[0] : undefined,
+                    lastmod: (site.news && site.news[0].publication_date) ? site.news[0].publication_date[0] : site.lastmod && site.lastmod[0]
+                    };
           });
+        */
+        const sites = data.urlset.url.reduce((filtered, site) => {
+            let lastmod = (site.news && site.news[0].publication_date) ? site.news[0].publication_date[0] : site.lastmod[0];
+            if (this.lastmod === 0 || lastmod === undefined || new Date(lastmod).getTime() >= this.lastmod) {
+              filtered.push({
+                      link: site.loc && site.loc[0],
+                      title: (site.news && site.news[0].title) ?  site.news[0].title[0] : undefined,
+                      lastmod: lastmod
+                      });  
+            }
+            return filtered;
+          }, []);
+        
         return {
           sites,
           errors: [],
