@@ -61,7 +61,7 @@ export default class Sitemapper {
     // initialize empty variables
     let results = {
       url: "",
-      sites: [],
+      urlset: [],
       errors: [],
     };
 
@@ -85,7 +85,7 @@ export default class Sitemapper {
 
     return {
       url,
-      sites: results.sites || [],
+      urlset: results.sites || [],
       errors: results.errors || [],
     };
   }
@@ -332,8 +332,9 @@ export default class Sitemapper {
                     };
           });
         */
-        const sites = data.urlset.url.reduce((filtered, site) => {
-            let lastmod = (site.news && site.news[0].publication_date) ? site.news[0].publication_date[0] : site.lastmod[0];
+        const sites = data.urlset.url
+          .reduce((filtered, site) => {
+            let lastmod = (site.news && site.news[0].publication_date) ? site.news[0].publication_date[0] : site.lastmod && site.lastmod[0];
             if (this.lastmod === 0 || lastmod === undefined || new Date(lastmod).getTime() >= this.lastmod) {
               filtered.push({
                       link: site.loc && site.loc[0],
